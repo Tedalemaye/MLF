@@ -53,6 +53,11 @@
 
     <div id="viewDiv"></div> <!-- Map container -->
 
+    <!-- Submit button container -->
+    <div class="button-container">
+        <button id="submitPoints">Submit Points</button>
+    </div>
+
     <script>
         require([
             "esri/Map",
@@ -103,7 +108,7 @@
                     }, 
                     selectionTools: { 
                         "lasso-selection": false,
-                        "rectangle-selection": false,
+                        "rectangle-selection": false, 
                         "circle-selection": false, 
                         "polygon-selection": false
                     }
