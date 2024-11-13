@@ -20,10 +20,6 @@
             margin-bottom: 10px;
         }
 
-        .button-container {
-            margin-top: 10px;
-        }
-
         #submitPoints {
             padding: 8px 16px;
             background-color: #007bff;
@@ -32,6 +28,7 @@
             cursor: pointer;
             border-radius: 4px;
             font-size: 16px;
+            margin-top: 10px;
         }
 
         #submitPoints:hover {
@@ -52,11 +49,6 @@
     </div>
 
     <div id="viewDiv"></div> <!-- Map container -->
-
-    <!-- Submit button container -->
-    <div class="button-container">
-        <button id="submitPoints">Submit Points</button>
-    </div>
 
     <script>
         require([
@@ -119,6 +111,12 @@
             // Add the Sketch widget to the top-right corner of the map
             view.ui.add(sketch, { position: "top-right" });
 
+            // Add the Submit button below the Sketch tool in the top-right corner
+            const submitButton = document.createElement("button");
+            submitButton.id = "submitPoints";
+            submitButton.innerText = "Submit Points";
+            view.ui.add(submitButton, "top-right");
+
             // Create a Locate widget to show user's current location
             const locateWidget = new Locate({
                 view: view,
@@ -154,7 +152,7 @@
             });
 
             // Submit button logic to send points to the feature layer
-            document.getElementById("submitPoints").onclick = function () {
+            submitButton.onclick = function () {
                 const userName = document.getElementById("userName").value;
                 const userEmail = document.getElementById("userEmail").value;
 
