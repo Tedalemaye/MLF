@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,7 +8,16 @@
     <script src="https://js.arcgis.com/4.26/"></script>
     <style>
         #viewDiv {
-            height: 100vh;
+            height: 80vh;
+        }
+
+        .form-container {
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+
+        .form-field {
+            margin-bottom: 10px;
         }
 
         .button-container {
@@ -32,6 +40,17 @@
     </style>
 </head>
 <body>
+    <div class="form-container">
+        <div class="form-field">
+            <label for="userName">Name:</label>
+            <input type="text" id="userName" placeholder="Enter your name" required>
+        </div>
+        <div class="form-field">
+            <label for="userEmail">Email:</label>
+            <input type="email" id="userEmail" placeholder="Enter your email" required>
+        </div>
+    </div>
+
     <div id="viewDiv"></div> <!-- Map container -->
 
     <script>
@@ -50,13 +69,12 @@
             const map = new Map({ basemap: "hybrid" });
 
             // Create the MapView focused on Ontario
-const view = new MapView({
-    container: "viewDiv",
-    map: map,
-    center: [-79.5, 43.7], // Center on Ontario
-    zoom: 7 // Adjust zoom level to fit most of Ontario
-});
-
+            const view = new MapView({
+                container: "viewDiv",
+                map: map,
+                center: [-79.5, 43.7], // Center on Ontario
+                zoom: 7 // Adjust zoom level to fit most of Ontario
+            });
 
             // Add GraphicsLayer to store the points
             const graphicsLayer = new GraphicsLayer();
@@ -117,55 +135,50 @@ const view = new MapView({
             // Add the Search widget to the top-left corner below the Locate widget
             view.ui.add(searchWidget, { position: "top-left", index: 1 });
 
-            // Button setup for submitting points
-            const buttonContainer = document.createElement("div");
-            buttonContainer.className = "button-container";
-
-            const submitButton = document.createElement("button");
-            submitButton.id = "submitPoints";
-            submitButton.textContent = "Submit Points";
-            buttonContainer.appendChild(submitButton);
-
-            // Add the submit button below the Sketch widget
-            view.ui.add(buttonContainer, { position: "top-right" });
-
             // Array to store drawn points
-const drawnPoints = [];
+            const drawnPoints = [];
 
-// Set the Sketch widget to continuous creation mode
-sketch.creationMode = "continuous";
+            // Set the Sketch widget to continuous creation mode
+            sketch.creationMode = "continuous";
 
-// Store points when the user finishes drawing them
-sketch.on("create", function (event) {
-    if (event.state === "complete") {
-        drawnPoints.push(event.graphic.geometry);
-    }
-});
-
-
+            // Store points when the user finishes drawing them
+            sketch.on("create", function (event) {
+                if (event.state === "complete") {
+                    drawnPoints.push(event.graphic.geometry);
+                }
+            });
 
             // Submit button logic to send points to the feature layer
-            submitButton.onclick = function () {
-                if (drawnPoints.length > 0) {
-                    const featureLayer = new FeatureLayer({
-                        url: "https://services5.arcgis.com/aGI9Mx1pvNKY7ehV/arcgis/rest/services/MapleTrees/FeatureServer"
-                    });
+            document.getElementById("submitPoints").onclick = function () {
+                const userName = document.getElementById("userName").value;
+                const userEmail = document.getElementById("userEmail").value;
 
-                    const features = drawnPoints.map(point => new Graphic({ geometry: point }));
-
-                    featureLayer.applyEdits({ addFeatures: features })
-                        .then(response => {
-                            console.log("Points submitted successfully!", response);
-                            drawnPoints.length = 0;
-                            graphicsLayer.removeAll();
-
-// Display confirmation message
-alert("Thank you for your planting map submission. We will contact you about the status of your application within a week or two.");
-                        })
-                        .catch(error => console.error("Error submitting points:", error));
-                } else {
-                    alert("No points to submit!");
+                // Check if user name, email, and points are filled out
+                if (!userName || !userEmail) {
+                    alert("Please enter your name and email.");
+                    return;
                 }
+                if (drawnPoints.length === 0) {
+                    alert("No points to submit!");
+                    return;
+                }
+
+                const featureLayer = new FeatureLayer({
+                    url: "https://services5.arcgis.com/aGI9Mx1pvNKY7ehV/arcgis/rest/services/MapleTrees/FeatureServer"
+                });
+
+                const features = drawnPoints.map(point => new Graphic({ geometry: point }));
+
+                featureLayer.applyEdits({ addFeatures: features })
+                    .then(response => {
+                        console.log("Points submitted successfully!", response);
+                        drawnPoints.length = 0;
+                        graphicsLayer.removeAll();
+
+                        // Display confirmation message with user name
+                        alert(`Thank you, ${userName}, for your planting map submission. We will contact you at ${userEmail} about the status of your application within a week or two.`);
+                    })
+                    .catch(error => console.error("Error submitting points:", error));
             };
         });
     </script>
