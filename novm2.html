@@ -1,95 +1,162 @@
-require([
-    "esri/Map",
-    "esri/views/MapView",
-    "esri/layers/GraphicsLayer",
-    "esri/widgets/Sketch",
-    "esri/Graphic",
-    "esri/layers/FeatureLayer",
-    "esri/geometry/SpatialReference",
-    "esri/geometry/support/webMercatorUtils"
-], function (Map, MapView, GraphicsLayer, Sketch, Graphic, FeatureLayer, SpatialReference, webMercatorUtils) {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Draw Points on Hybrid Map</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.26/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.26/"></script>
+    <style>
+        #viewDiv {
+            height: 80vh;
+        }
 
-    // Create the map with hybrid imagery basemap
-    const map = new Map({ basemap: "hybrid" });
+        .form-container {
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
 
-    // MapView setup
-    const view = new MapView({
-        container: "viewDiv",
-        map: map,
-        center: [-79.5, 43.7], // Center on Ontario
-        zoom: 7
-    });
+        .form-field {
+            margin-bottom: 10px;
+        }
 
-    // Graphics layer for points
-    const graphicsLayer = new GraphicsLayer();
-    map.add(graphicsLayer);
+        .button-container {
+            margin-top: 10px;
+        }
 
-    // Sketch widget
-    const sketch = new Sketch({
-        layer: graphicsLayer,
-        view: view,
-        creationMode: "update"
-    });
+        #submitPoints {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 16px;
+        }
 
-    view.ui.add(sketch, { position: "top-right" });
+        #submitPoints:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <div class="form-field">
+            <label for="userName">Name:</label>
+            <input type="text" id="userName" placeholder="Enter your name" required>
+        </div>
+        <div class="form-field">
+            <label for="userEmail">Email:</label>
+            <input type="email" id="userEmail" placeholder="Enter your email" required>
+        </div>
+        <div class="button-container">
+            <button id="submitPoints">Submit Points</button>
+        </div>
+    </div>
 
-    // Store lat/long data
-    const drawnPoints = [];
+    <div id="viewDiv"></div> <!-- Map container -->
 
-    // On create complete, convert coordinates to lat/long
-    sketch.on("create", function (event) {
-        if (event.state === "complete") {
-            // Convert to lat/long using webMercatorUtils
-            const latLongPoint = webMercatorUtils.webMercatorToGeographic(event.graphic.geometry);
-            
-            // Store as {latitude, longitude}
-            drawnPoints.push({
-                latitude: latLongPoint.y,
-                longitude: latLongPoint.x
+    <script>
+        require([
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/layers/GraphicsLayer",
+            "esri/widgets/Sketch",
+            "esri/Graphic",
+            "esri/layers/FeatureLayer",
+            "esri/geometry/support/webMercatorUtils",
+            "esri/geometry/SpatialReference"
+        ], function (Map, MapView, GraphicsLayer, Sketch, Graphic, FeatureLayer, webMercatorUtils, SpatialReference) {
+
+            // Create the map with hybrid imagery basemap
+            const map = new Map({ basemap: "hybrid" });
+
+            // MapView setup
+            const view = new MapView({
+                container: "viewDiv",
+                map: map,
+                center: [-79.5, 43.7], // Center on Ontario
+                zoom: 7
             });
-        }
-    });
 
-    document.getElementById("submitPoints").onclick = function () {
-        const userName = document.getElementById("userName").value;
-        const userEmail = document.getElementById("userEmail").value;
+            // Graphics layer for points
+            const graphicsLayer = new GraphicsLayer();
+            map.add(graphicsLayer);
 
-        if (!userName || !userEmail) {
-            alert("Please enter your name and email.");
-            return;
-        }
-        if (drawnPoints.length === 0) {
-            alert("No points to submit!");
-            return;
-        }
+            // Sketch widget for drawing points
+            const sketch = new Sketch({
+                layer: graphicsLayer,
+                view: view,
+                creationMode: "update",
+                visibleElements: {
+                    createTools: { point: true, polyline: false, polygon: false, rectangle: false, circle: false },
+                    selectionTools: { "lasso-selection": false, "rectangle-selection": false, "circle-selection": false, "polygon-selection": false }
+                }
+            });
 
-        // Submit lat/long points with name and email attributes
-        const featureLayer = new FeatureLayer({
-            url: "https://services5.arcgis.com/aGI9Mx1pvNKY7ehV/arcgis/rest/services/MapleTrees/FeatureServer"
+            view.ui.add(sketch, { position: "top-right" });
+
+            // Store lat/long data
+            const drawnPoints = [];
+
+            // On create complete, convert coordinates to lat/long
+            sketch.on("create", function (event) {
+                if (event.state === "complete") {
+                    // Convert to lat/long using webMercatorUtils
+                    const latLongPoint = webMercatorUtils.webMercatorToGeographic(event.graphic.geometry);
+                    
+                    // Store as {latitude, longitude}
+                    drawnPoints.push({
+                        latitude: latLongPoint.y,
+                        longitude: latLongPoint.x
+                    });
+                }
+            });
+
+            // Submit button logic
+            document.getElementById("submitPoints").onclick = function () {
+                const userName = document.getElementById("userName").value;
+                const userEmail = document.getElementById("userEmail").value;
+
+                if (!userName || !userEmail) {
+                    alert("Please enter your name and email.");
+                    return;
+                }
+                if (drawnPoints.length === 0) {
+                    alert("No points to submit!");
+                    return;
+                }
+
+                // Submit lat/long points with name and email attributes
+                const featureLayer = new FeatureLayer({
+                    url: "https://services5.arcgis.com/aGI9Mx1pvNKY7ehV/arcgis/rest/services/MapleTrees/FeatureServer"
+                });
+
+                const features = drawnPoints.map(point => new Graphic({
+                    geometry: {
+                        type: "point",
+                        latitude: point.latitude,
+                        longitude: point.longitude,
+                        spatialReference: SpatialReference.WGS84
+                    },
+                    attributes: {
+                        Name: userName,
+                        Email: userEmail
+                    }
+                }));
+
+                featureLayer.applyEdits({ addFeatures: features })
+                    .then(response => {
+                        console.log("Lat/Long points submitted successfully!", response);
+                        drawnPoints.length = 0; // Clear points array
+                        graphicsLayer.removeAll();
+
+                        // Confirmation message
+                        alert(`Thank you, ${userName}, for your planting map submission. We will contact you at ${userEmail}.`);
+                    })
+                    .catch(error => console.error("Error submitting points:", error));
+            };
         });
-
-        const features = drawnPoints.map(point => new Graphic({
-            geometry: {
-                type: "point",
-                latitude: point.latitude,
-                longitude: point.longitude,
-                spatialReference: SpatialReference.WGS84
-            },
-            attributes: {
-                Name: userName,
-                Email: userEmail
-            }
-        }));
-
-        featureLayer.applyEdits({ addFeatures: features })
-            .then(response => {
-                console.log("Lat/Long points submitted successfully!", response);
-                drawnPoints.length = 0; // Clear points array
-                graphicsLayer.removeAll();
-
-                // Confirmation message
-                alert(`Thank you, ${userName}, for your planting map submission. We will contact you at ${userEmail}.`);
-            })
-            .catch(error => console.error("Error submitting points:", error));
-    };
-});
+    </script>
+</body>
+</html>
