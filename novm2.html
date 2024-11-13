@@ -8,7 +8,7 @@
     <script src="https://js.arcgis.com/4.26/"></script>
     <style>
         #viewDiv {
-            height: 70vh;
+            height: 80vh;
         }
 
         .form-container {
@@ -21,30 +21,14 @@
             margin-bottom: 10px;
         }
 
-        .button-container {
-            margin-top: 10px;
-            text-align: center;
-        }
-
-        #submitPoints {
-            padding: 8px 16px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-
-        #submitPoints:hover {
-            background-color: #0056b3;
-        }
-
         .address-bar {
             padding: 10px;
             background-color: #ffffff;
             border-bottom: 1px solid #ccc;
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
         }
 
         .address-bar input {
@@ -65,29 +49,38 @@
         .address-bar button:hover {
             background-color: #0056b3;
         }
+
+        .button-container {
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        #submitPoints {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        #submitPoints:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
-    <!-- Address Bar Section -->
+    <!-- Map Container -->
+    <div id="viewDiv"></div>
+
+    <!-- Address Bar integrated within the map -->
     <div class="address-bar">
         <input type="text" id="addressInput" placeholder="Enter Address">
         <button id="searchAddress">Search</button>
     </div>
 
-    <div class="form-container">
-        <div class="form-field">
-            <label for="userName">Name:</label>
-            <input type="text" id="userName" placeholder="Enter your name" required>
-        </div>
-        <div class="form-field">
-            <label for="userEmail">Email:</label>
-            <input type="email" id="userEmail" placeholder="Enter your email" required>
-        </div>
-    </div>
-
-    <!-- Map Container -->
-    <div id="viewDiv"></div>
-
+    <!-- Draw tool and Submit button integrated into the map -->
     <div class="button-container">
         <button id="submitPoints">Submit Points</button>
     </div>
@@ -175,8 +168,8 @@
 
             // Submit button logic
             document.getElementById("submitPoints").onclick = function () {
-                const userName = document.getElementById("userName").value;
-                const userEmail = document.getElementById("userEmail").value;
+                const userName = prompt("Please enter your name:");
+                const userEmail = prompt("Please enter your email:");
 
                 if (!userName || !userEmail) {
                     alert("Please enter your name and email.");
