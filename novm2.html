@@ -8,12 +8,13 @@
     <script src="https://js.arcgis.com/4.26/"></script>
     <style>
         #viewDiv {
-            height: 80vh;
+            height: 70vh;
         }
 
         .form-container {
             padding: 10px;
             background-color: #f9f9f9;
+            margin-top: 10px;
         }
 
         .form-field {
@@ -22,6 +23,7 @@
 
         .button-container {
             margin-top: 10px;
+            text-align: center;
         }
 
         #submitPoints {
@@ -37,9 +39,41 @@
         #submitPoints:hover {
             background-color: #0056b3;
         }
+
+        .address-bar {
+            padding: 10px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #ccc;
+            text-align: center;
+        }
+
+        .address-bar input {
+            width: 70%;
+            padding: 5px;
+            margin-right: 5px;
+        }
+
+        .address-bar button {
+            padding: 5px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .address-bar button:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
+    <!-- Address Bar Section -->
+    <div class="address-bar">
+        <input type="text" id="addressInput" placeholder="Enter Address">
+        <button id="searchAddress">Search</button>
+    </div>
+
     <div class="form-container">
         <div class="form-field">
             <label for="userName">Name:</label>
@@ -49,12 +83,14 @@
             <label for="userEmail">Email:</label>
             <input type="email" id="userEmail" placeholder="Enter your email" required>
         </div>
-        <div class="button-container">
-            <button id="submitPoints">Submit Points</button>
-        </div>
     </div>
 
-    <div id="viewDiv"></div> <!-- Map container -->
+    <!-- Map Container -->
+    <div id="viewDiv"></div>
+
+    <div class="button-container">
+        <button id="submitPoints">Submit Points</button>
+    </div>
 
     <script>
         require([
@@ -65,8 +101,9 @@
             "esri/Graphic",
             "esri/layers/FeatureLayer",
             "esri/geometry/support/webMercatorUtils",
-            "esri/geometry/SpatialReference"
-        ], function (Map, MapView, GraphicsLayer, Sketch, Graphic, FeatureLayer, webMercatorUtils, SpatialReference) {
+            "esri/geometry/SpatialReference",
+            "esri/tasks/Locator"
+        ], function (Map, MapView, GraphicsLayer, Sketch, Graphic, FeatureLayer, webMercatorUtils, SpatialReference, Locator) {
 
             // Create the map with hybrid imagery basemap
             const map = new Map({ basemap: "hybrid" });
@@ -112,6 +149,29 @@
                     });
                 }
             });
+
+            // Search for address when the user presses the "Search" button
+            document.getElementById("searchAddress").onclick = function () {
+                const address = document.getElementById("addressInput").value;
+                const locator = new Locator({
+                    url: "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer"
+                });
+
+                locator.addressToLocations({
+                    address: { "SingleLine": address },
+                    outFields: ["Match_addr", "LongLabel", "Lat", "Long"]
+                }).then(function (results) {
+                    if (results.length > 0) {
+                        const location = results[0].location;
+                        view.goTo({ center: location, zoom: 12 });
+                    } else {
+                        alert("Address not found!");
+                    }
+                }).catch(function (error) {
+                    console.error(error);
+                    alert("An error occurred while searching the address.");
+                });
+            };
 
             // Submit button logic
             document.getElementById("submitPoints").onclick = function () {
