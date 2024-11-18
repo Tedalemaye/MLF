@@ -63,11 +63,13 @@
         ], function (Map, MapView, GraphicsLayer, Sketch, Graphic, FeatureLayer, Locate, Search) {
 
             // Create the map with hybrid imagery basemap
-            const map = new Map({ basemap: "hybrid" });
+            const map = new Map({
+                basemap: "hybrid"
+            });
 
             // Create the MapView focused on Ontario
             const view = new MapView({
-                container: "viewDiv",
+                container: "viewDiv", // ID of the map container
                 map: map,
                 center: [-79.5, 43.7], // Center on Ontario
                 zoom: 7 // Adjust zoom level to fit most of Ontario
@@ -92,20 +94,20 @@
                 creationMode: "update",
                 visibleElements: {
                     createTools: {
-                        point: true, 
-                        polyline: false, 
-                        polygon: false, 
-                        rectangle: false, 
+                        point: true,
+                        polyline: false,
+                        polygon: false,
+                        rectangle: false,
                         circle: false
-                    }, 
-                    selectionTools: { 
+                    },
+                    selectionTools: {
                         "lasso-selection": false,
-                        "rectangle-selection": false, 
-                        "circle-selection": false, 
+                        "rectangle-selection": false,
+                        "circle-selection": false,
                         "polygon-selection": false
                     }
                 },
-                pointSymbol: pointSymbol 
+                pointSymbol: pointSymbol
             });
 
             // Add the Sketch widget to the top-right corner of the map
@@ -192,7 +194,7 @@
                         graphicsLayer.removeAll();
 
                         // Display confirmation message with user name
-                        alert(Thank you, ${userName}, for your planting map submission. We will contact you at ${userEmail} about the status of your application within a week or two.);
+                        alert(`Thank you, ${userName}, for your planting map submission. We will contact you at ${userEmail} about the status of your application within a week or two.`);
                     })
                     .catch(error => console.error("Error submitting points:", error));
             };
