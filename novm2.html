@@ -9,11 +9,19 @@
     <style>
         #viewDiv {
             height: 80vh;
+            width: 100%;
         }
 
         .form-container {
             padding: 10px;
             background-color: #f9f9f9;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 2;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 5px;
+            padding: 15px;
         }
 
         .form-field {
@@ -46,6 +54,7 @@
             <label for="userEmail">Email:</label>
             <input type="email" id="userEmail" placeholder="Enter your email" required>
         </div>
+        <button id="submitPoints">Submit Points</button>
     </div>
 
     <div id="viewDiv"></div> <!-- Map container -->
@@ -111,7 +120,88 @@
             // Add the Sketch widget to the top-right corner of the map
             view.ui.add(sketch, { position: "top-right" });
 
-            // Add the Submit button below the Sketch tool in the top-right corner
-            const submitButton = document.createElement("button");
-            submitButton.id = "submitPoints";
-            submitButton.innerText = "Submit Poin
+            // Array to store drawn points with coordinates
+            const drawnPoints = [];
+
+            // Set the Sketch widget to continuous creation mode
+            sketch.creationMode = "continuous";
+
+            // Store points with coordinates when the user finishes drawing them
+            sketch.on("create", function (event) {
+                if (event.state === "complete") {
+                    const point = event.graphic.geometry;
+                    drawnPoints.push({
+                        geometry: point,
+                        latitude: point.latitude,
+                        longitude: point.longitude
+                    });
+                }
+            });
+
+            // Create a Locate widget to show user's current location
+            const locateWidget = new Locate({
+                view: view,
+                useHeadingEnabled: false,
+                goToOverride: function (view, options) {
+                    options.target.scale = 1500; // Zoom in when locating user
+                    return view.goTo(options.target);
+                }
+            });
+
+            // Add the Locate widget to the top-left corner of the map
+            view.ui.add(locateWidget, { position: "top-left" });
+
+            // Create a Search widget to search for addresses and zoom to them
+            const searchWidget = new Search({
+                view: view
+            });
+
+            // Add the Search widget to the top-left corner below the Locate widget
+            view.ui.add(searchWidget, { position: "top-left", index: 1 });
+
+            // Submit button logic to send points to a FeatureLayer (or another storage method)
+            document.getElementById("submitPoints").onclick = function () {
+                const userName = document.getElementById("userName").value;
+                const userEmail = document.getElementById("userEmail").value;
+
+                // Check if user name, email, and points are filled out
+                if (!userName || !userEmail) {
+                    alert("Please enter your name and email.");
+                    return;
+                }
+                if (drawnPoints.length === 0) {
+                    alert("No points to submit!");
+                    return;
+                }
+
+                // Prepare features with coordinates in attributes
+                const features = drawnPoints.map(point => new Graphic({
+                    geometry: point.geometry,
+                    attributes: {
+                        latitude: point.latitude,
+                        longitude: point.longitude,
+                        userName: userName,
+                        userEmail: userEmail
+                    }
+                }));
+
+                // Assuming you have a FeatureLayer URL to submit the points
+                const featureLayer = new FeatureLayer({
+                    url: "https://services5.arcgis.com/aGI9Mx1pvNKY7ehV/arcgis/rest/services/MapleTrees/FeatureServer"
+                });
+
+                featureLayer.applyEdits({
+                    addFeatures: features
+                }).then(function () {
+                    alert("Points successfully submitted!");
+                    // Optionally clear drawn points after submission
+                    drawnPoints.length = 0;
+                    graphicsLayer.removeAll();
+                }).catch(function (error) {
+                    alert("Error submitting points: " + error.message);
+                });
+            };
+        });
+    </script>
+</body>
+</html>
