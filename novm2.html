@@ -157,6 +157,11 @@
                 }
             });
 
+             // Create FeatureLayer instance outside of the submit button click event
+            const featureLayer = new FeatureLayer({
+                url: "https://services5.arcgis.com/aGI9Mx1pvNKY7ehV/arcgis/rest/services/MapleTrees/FeatureServer"
+            });
+            
             // Submit button logic to send points to the feature layer
             submitButton.onclick = function () {
                 const userName = document.getElementById("userName").value;
@@ -172,9 +177,7 @@
                     return;
                 }
 
-                const featureLayer = new FeatureLayer({
-                    url: "https://services5.arcgis.com/aGI9Mx1pvNKY7ehV/arcgis/rest/services/MapleTrees/FeatureServer"
-                });
+               
 
                 // Prepare features with coordinates in attributes
                 const features = drawnPoints.map(point => new Graphic({
@@ -186,18 +189,4 @@
                         userEmail: userEmail
                     }
                 }));
-                featureLayer.applyEdits({ addFeatures: features })
-                    .then(response => {
-                        console.log("Points submitted successfully!", response);
-                        drawnPoints.length = 0;
-                        graphicsLayer.removeAll();
-
-                        // Display confirmation message with user name
-                        alert(`Thank you, ${userName}, for your planting map submission. We will contact you at ${userEmail} about the status of your application within a week or two.`);
-                    })
-                    .catch(error => console.error("Error submitting points:", error));
-            };
-        });
-    </script>
-</body>
-</html>
+                
