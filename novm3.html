@@ -10,13 +10,16 @@
         #viewDiv {
             height: 80vh;
         }
+
         .form-container {
             padding: 10px;
             background-color: #f9f9f9;
         }
+
         .form-field {
             margin-bottom: 10px;
         }
+
         #submitPoints {
             padding: 8px 16px;
             background-color: #007bff;
@@ -27,6 +30,7 @@
             font-size: 16px;
             margin-top: 10px;
         }
+
         #submitPoints:hover {
             background-color: #0056b3;
         }
@@ -173,17 +177,16 @@
                     url: "https://services5.arcgis.com/aGI9Mx1pvNKY7ehV/arcgis/rest/services/MapleTrees/FeatureServer"
                 });
 
-                // Prepare features with latitude and longitude in attributes
+                // Prepare features with coordinates in attributes
                 const features = drawnPoints.map(point => new Graphic({
                     geometry: point.geometry,
                     attributes: {
-                        Latitude: point.latitude, // Ensure these match your layer's field names
+                        Latitude: point.latitude, // Matches the exact field name in your feature layer
                         Longitude: point.longitude,
                         userName: userName,
                         userEmail: userEmail
                     }
                 }));
-
                 featureLayer.applyEdits({ addFeatures: features })
                     .then(response => {
                         console.log("Points submitted successfully!", response);
