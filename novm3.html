@@ -150,6 +150,7 @@
             sketch.on("create", function (event) {
                 if (event.state === "complete") {
                     const point = event.graphic.geometry;
+                    console.log(`Latitude: ${point.latitude}, Longitude: ${point.longitude}`); // Debug log
                     drawnPoints.push({
                         geometry: point,
                         latitude: point.latitude,
@@ -178,15 +179,18 @@
                 });
 
                 // Prepare features with coordinates in attributes
-                const features = drawnPoints.map(point => new Graphic({
-                    geometry: point.geometry,
-                    attributes: {
-                        lat2: point.latitude, // Matches the 'lat2' field in your feature layer
-                        long2: point.longitude, // Matches the 'long2' field in your feature layer
-                        userName: userName,
-                        userEmail: userEmail
-                    }
-                }));
+                const features = drawnPoints.map(point => {
+                    console.log(`Submitting Point - Lat: ${point.latitude}, Long: ${point.longitude}`); // Debug log
+                    return new Graphic({
+                        geometry: point.geometry,
+                        attributes: {
+                            lat2: point.latitude, // Matches the 'lat2' field in your feature layer
+                            long2: point.longitude, // Matches the 'long2' field in your feature layer
+                            userName: userName,
+                            userEmail: userEmail
+                        }
+                    });
+                });
 
                 // Submit points to the feature layer
                 featureLayer.applyEdits({ addFeatures: features })
