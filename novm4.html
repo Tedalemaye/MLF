@@ -1,64 +1,160 @@
-// Add an event listener to the submit button
-submitButton.onclick = function () {
-    // Get user input (name and email)
-    const userName = document.getElementById("userName").value;
-    const userEmail = document.getElementById("userEmail").value;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collect and Submit GPS Points</title>
+    <script src="https://js.arcgis.com/4.24/"></script>
+    <style>
+        #mapViewDiv {
+            height: 600px;
+            width: 100%;
+        }
+        #mapForm {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
 
-    // Validate that the user has provided both a name and an email
-    if (!userName || !userEmail) {
-        alert("Please enter your name and email.");
-        return;
-    }
-    
-    // Validate that there are points to submit
-    if (drawnPoints.length === 0) {
-        alert("No points to submit!");
-        return;
-    }
+    <!-- HTML Form to collect user's name and email -->
+    <form id="mapForm">
+        <label for="userName">Name:</label>
+        <input type="text" id="userName" required>
 
-    // Define the feature layer where we will submit the points
-    const featureLayer = new FeatureLayer({
-        url: "https://services5.arcgis.com/aGI9Mx1pvNKY7ehV/arcgis/rest/services/MapleTrees/FeatureServer"
-    });
+        <label for="userEmail">Email:</label>
+        <input type="email" id="userEmail" required>
 
-    // Map each drawn point into a graphic with geometry and attributes
-    const features = drawnPoints.map(point => {
-        // Ensure point.geometry is of type Point, create one if necessary
-        const pointGeometry = new Point({
-            latitude: point.Latitude,    // Latitude from the drawn point
-            longitude: point.Longitude   // Longitude from the drawn point
+        <button type="button" id="submitButton">Submit</button>
+    </form>
+
+    <!-- Map Container -->
+    <div id="mapViewDiv"></div>
+
+    <script>
+        require([
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/layers/FeatureLayer",
+            "esri/Graphic",
+            "esri/geometry/Point",
+            "esri/geometry/SpatialReference",
+            "esri/widgets/Locate",
+            "dojo/domReady!"
+        ], function(Map, MapView, FeatureLayer, Graphic, Point, SpatialReference, Locate) {
+
+            // Create the map and view
+            const map = new Map({
+                basemap: "streets-navigation-vector"
+            });
+
+            const view = new MapView({
+                container: "mapViewDiv",  // The container ID for the map
+                map: map,
+                center: [-98.583333, 39.8283],  // Set initial center [Longitude, Latitude]
+                zoom: 5
+            });
+
+            // Add a locate widget to get the user's GPS location
+            const locateWidget = new Locate({
+                view: view
+            });
+            view.ui.add(locateWidget, "top-left");
+
+            // Create a feature layer (replace URL with your actual feature layer URL)
+            const featureLayer = new FeatureLayer({
+                url: "https://services5.arcgis.com/aGI9Mx1pvNKY7ehV/arcgis/rest/services/MapleTrees/FeatureServer"
+            });
+
+            // Add the feature layer to the map
+            map.add(featureLayer);
+
+            // Create an array to store drawn points
+            let drawnPoints = [];
+
+            // Event listener for collecting points on map click
+            view.on("click", function(event) {
+                // Get the clicked point
+                const point = new Point({
+                    latitude: event.mapPoint.latitude,
+                    longitude: event.mapPoint.longitude,
+                    spatialReference: new SpatialReference({ wkid: 4326 })  // WGS 84
+                });
+
+                // Store the drawn point
+                drawnPoints.push({
+                    Latitude: point.latitude,
+                    Longitude: point.longitude,
+                    geometry: point
+                });
+
+                // Add a graphic to the map for visual feedback
+                const pointGraphic = new Graphic({
+                    geometry: point,
+                    symbol: {
+                        type: "simple-marker",
+                        color: "red",
+                        size: "8px"
+                    }
+                });
+                view.graphics.add(pointGraphic);
+            });
+
+            // Button click handler to submit collected points
+            document.getElementById("submitButton").onclick = function () {
+                // Get user input for name and email
+                const userName = document.getElementById("userName").value;
+                const userEmail = document.getElementById("userEmail").value;
+
+                // Validate the inputs
+                if (!userName || !userEmail) {
+                    alert("Please enter your name and email.");
+                    return;
+                }
+
+                // Validate that points were collected
+                if (drawnPoints.length === 0) {
+                    alert("No points to submit!");
+                    return;
+                }
+
+                // Prepare the features to submit to the feature layer
+                const features = drawnPoints.map(point => {
+                    return new Graphic({
+                        geometry: point.geometry,
+                        attributes: {
+                            esrignss_latitude: point.Latitude,  // Latitude field in your Feature Layer
+                            esrignss_longitude: point.Longitude, // Longitude field in your Feature Layer
+                            userName: userName,
+                            userEmail: userEmail
+                        }
+                    });
+                });
+
+                // Submit the points to the feature layer
+                featureLayer.applyEdits({
+                    addFeatures: features  // Add the new points to the feature layer
+                })
+                .then(response => {
+                    // Success callback
+                    console.log("Points submitted successfully!", response);
+
+                    // Clear the points and graphics from the map
+                    drawnPoints = [];
+                    view.graphics.removeAll();
+
+                    // Alert the user of successful submission
+                    alert(`Thank you, ${userName}, for your planting map submission. We will contact you at ${userEmail} about the status of your application within a week or two.`);
+                })
+                .catch(error => {
+                    // Error callback
+                    console.error("Error submitting points:", error);
+                    alert("There was an error submitting your points. Please try again.");
+                });
+            };
+
         });
+    </script>
 
-        // Create a Graphic with geometry and attributes
-        return new Graphic({
-            geometry: pointGeometry,     // Set geometry to the created point
-            attributes: {
-                esrignss_latitude: point.Latitude,  // Latitude field
-                esrignss_longitude: point.Longitude, // Longitude field
-                userName: userName,                 // User Name field
-                userEmail: userEmail               // User Email field
-            }
-        });
-    });
-
-    // Apply edits to the feature layer (add new points)
-    featureLayer.applyEdits({
-        addFeatures: features  // Add the features to the feature layer
-    })
-    .then(response => {
-        // Log success and clear drawn points
-        console.log("Points submitted successfully!", response);
-        
-        // Clear the drawn points and remove graphics from the graphics layer
-        drawnPoints.length = 0;
-        graphicsLayer.removeAll();
-
-        // Display a success message to the user
-        alert(`Thank you, ${userName}, for your planting map submission. We will contact you at ${userEmail} about the status of your application within a week or two.`);
-    })
-    .catch(error => {
-        // Log and alert on error
-        console.error("Error submitting points:", error);
-        alert("There was an error submitting your points. Please try again.");
-    });
-};
+</body>
+</html>
