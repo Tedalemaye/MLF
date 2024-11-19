@@ -1,39 +1,64 @@
+// Add an event listener to the submit button
 submitButton.onclick = function () {
+    // Get user input (name and email)
     const userName = document.getElementById("userName").value;
     const userEmail = document.getElementById("userEmail").value;
 
+    // Validate that the user has provided both a name and an email
     if (!userName || !userEmail) {
         alert("Please enter your name and email.");
         return;
     }
+    
+    // Validate that there are points to submit
     if (drawnPoints.length === 0) {
         alert("No points to submit!");
         return;
     }
 
+    // Define the feature layer where we will submit the points
     const featureLayer = new FeatureLayer({
         url: "https://services5.arcgis.com/aGI9Mx1pvNKY7ehV/arcgis/rest/services/MapleTrees/FeatureServer"
     });
 
+    // Map each drawn point into a graphic with geometry and attributes
     const features = drawnPoints.map(point => {
+        // Ensure point.geometry is of type Point, create one if necessary
+        const pointGeometry = new Point({
+            latitude: point.Latitude,    // Latitude from the drawn point
+            longitude: point.Longitude   // Longitude from the drawn point
+        });
+
+        // Create a Graphic with geometry and attributes
         return new Graphic({
-            geometry: point.geometry,
+            geometry: pointGeometry,     // Set geometry to the created point
             attributes: {
-                esrignss_latitude: point.Latitude,  // Match field name for latitude
-                esrignss_longitude: point.Longitude, // Match field name for longitude
-                userName: userName,
-                userEmail: userEmail
+                esrignss_latitude: point.Latitude,  // Latitude field
+                esrignss_longitude: point.Longitude, // Longitude field
+                userName: userName,                 // User Name field
+                userEmail: userEmail               // User Email field
             }
         });
     });
 
-    featureLayer.applyEdits({ addFeatures: features })
-        .then(response => {
-            console.log("Points submitted successfully!", response);
-            drawnPoints.length = 0;
-            graphicsLayer.removeAll();
+    // Apply edits to the feature layer (add new points)
+    featureLayer.applyEdits({
+        addFeatures: features  // Add the features to the feature layer
+    })
+    .then(response => {
+        // Log success and clear drawn points
+        console.log("Points submitted successfully!", response);
+        
+        // Clear the drawn points and remove graphics from the graphics layer
+        drawnPoints.length = 0;
+        graphicsLayer.removeAll();
 
-            alert(`Thank you, ${userName}, for your planting map submission. We will contact you at ${userEmail} about the status of your application within a week or two.`);
-        })
-        .catch(error => console.error("Error submitting points:", error));
+        // Display a success message to the user
+        alert(`Thank you, ${userName}, for your planting map submission. We will contact you at ${userEmail} about the status of your application within a week or two.`);
+    })
+    .catch(error => {
+        // Log and alert on error
+        console.error("Error submitting points:", error);
+        alert("There was an error submitting your points. Please try again.");
+    });
 };
