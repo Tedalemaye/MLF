@@ -175,7 +175,7 @@
                 }
 
                 const featureLayer = new FeatureLayer({
-                    url: "https://services5.arcgis.com/aGI9Mx1pvNKY7ehV/arcgis/rest/services/MapleTrees/FeatureServer"
+                    url: "https://services5.arcgis.com/aGI9Mx1pvNKY7ehV/arcgis/rest/services/MapleLeaves/FeatureServer"
                 });
 
                 // Prepare features with coordinates in attributes
@@ -184,8 +184,8 @@
                     return new Graphic({
                         geometry: point.geometry,
                         attributes: {
-                            lat2: point.latitude, // Matches the 'lat2' field in your feature layer
-                            long2: point.longitude, // Matches the 'long2' field in your feature layer
+                            esrignss_latitude: point.latitude, // Matches the 'esrignss_latitude' field in your feature layer
+                            esrignss_longitude: point.longitude, // Matches the 'esrignss_longitude' field in your feature layer
                             userName: userName,
                             userEmail: userEmail
                         }
