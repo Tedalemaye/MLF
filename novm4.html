@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -154,8 +153,8 @@
                     console.log(`Latitude: ${point.latitude}, Longitude: ${point.longitude}`); // Debug log
                     drawnPoints.push({
                         geometry: point,
-                        latitude: point.latitude,
-                        longitude: point.longitude
+                        Latitude: point.latitude,
+                        Longitude: point.longitude
                     });
                 }
             });
@@ -181,12 +180,12 @@
 
                 // Prepare features with coordinates in attributes
                 const features = drawnPoints.map(point => {
-                    console.log(`Submitting Point - Lat: ${point.latitude}, Long: ${point.longitude}`); // Debug log
+                    console.log(`Submitting Point - Lat: ${point.Latitude}, Long: ${point.Longitude}`); // Debug log
                     return new Graphic({
                         geometry: point.geometry,
                         attributes: {
-                            lat2: point.latitude, // Matches the 'lat2' field in your feature layer
-                            long2: point.longitude, // Matches the 'long2' field in your feature layer
+                            Latitude: point.Latitude, // Matches the 'Latitude' field in your feature layer
+                            Longitude: point.Longitude, // Matches the 'Longitude' field in your feature layer
                             userName: userName,
                             userEmail: userEmail
                         }
@@ -209,4 +208,3 @@
     </script>
 </body>
 </html>
-
