@@ -67,12 +67,17 @@
                 basemap: "hybrid"
             });
 
-            // Create the MapView focused on Ontario
+            // Create the MapView
             const view = new MapView({
                 container: "viewDiv", // ID of the map container
                 map: map,
                 center: [-79.5, 43.7], // Center on Ontario
                 zoom: 7 // Adjust zoom level to fit most of Ontario
+            });
+
+            // Create a feature layer to submit points to
+            const featureLayer = new FeatureLayer({
+                url: "https://services5.arcgis.com/aGI9Mx1pvNKY7ehV/arcgis/rest/services/MapleTrees/FeatureServer/0"
             });
 
             // Add GraphicsLayer to store the points
@@ -110,16 +115,16 @@
                 pointSymbol: pointSymbol
             });
 
-            // Add the Sketch widget to the top-right corner of the map
+            // Add the Sketch widget to the map
             view.ui.add(sketch, { position: "top-right" });
 
-            // Add the Submit button below the Sketch tool in the top-right corner
+            // Add the Submit button to the map
             const submitButton = document.createElement("button");
             submitButton.id = "submitPoints";
             submitButton.innerText = "Submit Points";
             view.ui.add(submitButton, "top-right");
 
-            // Create a Locate widget to show user's current location
+            // Create a Locate widget to show the user's current location
             const locateWidget = new Locate({
                 view: view,
                 useHeadingEnabled: false,
@@ -129,28 +134,27 @@
                 }
             });
 
-            // Add the Locate widget to the top-left corner of the map
+            // Add the Locate widget to the map
             view.ui.add(locateWidget, { position: "top-left" });
 
-            // Create a Search widget to search for addresses and zoom to them
+            // Create a Search widget to search for addresses
             const searchWidget = new Search({
                 view: view
             });
 
-            // Add the Search widget to the top-left corner below the Locate widget
+            // Add the Search widget to the map
             view.ui.add(searchWidget, { position: "top-left", index: 1 });
 
-            // Array to store drawn points with coordinates
+            // Array to store drawn points
             const drawnPoints = [];
 
             // Set the Sketch widget to continuous creation mode
             sketch.creationMode = "continuous";
 
-            // Store points with coordinates when the user finishes drawing them
+            // Store points when the user finishes drawing them
             sketch.on("create", function (event) {
                 if (event.state === "complete") {
                     const point = event.graphic.geometry;
-                    console.log(`Latitude: ${point.latitude}, Longitude: ${point.longitude}`); // Debug log
                     drawnPoints.push({
                         geometry: point,
                         latitude: point.latitude,
@@ -174,18 +178,13 @@
                     return;
                 }
 
-                const featureLayer = new FeatureLayer({
-                    url: "https://services5.arcgis.com/aGI9Mx1pvNKY7ehV/arcgis/rest/services/MapleTrees/FeatureServer"
-                });
-
-                // Prepare features with coordinates in attributes
+                // Prepare features to send to the feature layer
                 const features = drawnPoints.map(point => {
-                    console.log(`Submitting Point - Lat: ${point.latitude}, Long: ${point.longitude}`); // Debug log
                     return new Graphic({
                         geometry: point.geometry,
                         attributes: {
-                            esrignss_latitude: point.latitude, // Matches the 'esrignss_latitude' field in your feature layer
-                            esrignss_longitude: point.longitude, // Matches the 'esrignss_longitude' field in your feature layer
+                            esrignss_latitude: point.latitude, // Matches 'esrignss_latitude' field
+                            esrignss_longitude: point.longitude, // Matches 'esrignss_longitude' field
                             userName: userName,
                             userEmail: userEmail
                         }
@@ -196,14 +195,24 @@
                 featureLayer.applyEdits({ addFeatures: features })
                     .then(response => {
                         console.log("Points submitted successfully!", response);
-                        drawnPoints.length = 0;
-                        graphicsLayer.removeAll();
+                        drawnPoints.length = 0; // Clear drawn points
+                        graphicsLayer.removeAll(); // Clear graphics
 
                         // Display confirmation message with user name
                         alert(`Thank you, ${userName}, for your planting map submission. We will contact you at ${userEmail} about the status of your application within a week or two.`);
                     })
-                    .catch(error => console.error("Error submitting points:", error));
+                    .catch(error => {
+                        console.error("Error submitting points:", error);
+                        alert("There was an error submitting the points. Please try again.");
+                    });
             };
+
+            // Additional debugging: Log and check if the layer is editable
+            featureLayer.load().then(() => {
+                console.log("Feature Layer editable:", featureLayer.hasEditsCapability);
+            }).catch(err => {
+                console.error("Error loading feature layer:", err);
+            });
         });
     </script>
 </body>
