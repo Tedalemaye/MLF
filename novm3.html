@@ -10,13 +10,16 @@
         #viewDiv {
             height: 80vh;
         }
+
         .form-container {
             padding: 10px;
             background-color: #f9f9f9;
         }
+
         .form-field {
             margin-bottom: 10px;
         }
+
         #submitPoints {
             padding: 8px 16px;
             background-color: #007bff;
@@ -27,6 +30,7 @@
             font-size: 16px;
             margin-top: 10px;
         }
+
         #submitPoints:hover {
             background-color: #0056b3;
         }
@@ -58,18 +62,24 @@
             "esri/widgets/Search"
         ], function (Map, MapView, GraphicsLayer, Sketch, Graphic, FeatureLayer, Locate, Search) {
 
-            const map = new Map({ basemap: "hybrid" });
-
-            const view = new MapView({
-                container: "viewDiv",
-                map: map,
-                center: [-79.5, 43.7],
-                zoom: 7
+            // Create the map with hybrid imagery basemap
+            const map = new Map({
+                basemap: "hybrid"
             });
 
+            // Create the MapView focused on Ontario
+            const view = new MapView({
+                container: "viewDiv", // ID of the map container
+                map: map,
+                center: [-79.5, 43.7], // Center on Ontario
+                zoom: 7 // Adjust zoom level to fit most of Ontario
+            });
+
+            // Add GraphicsLayer to store the points
             const graphicsLayer = new GraphicsLayer();
             map.add(graphicsLayer);
 
+            // Create a custom red circle symbol for points
             const pointSymbol = {
                 type: "simple-marker",
                 style: "circle",
@@ -77,39 +87,66 @@
                 size: "12px"
             };
 
+            // Create a Sketch widget with only the "point" tool enabled
             const sketch = new Sketch({
                 layer: graphicsLayer,
                 view: view,
                 creationMode: "update",
                 visibleElements: {
-                    createTools: { point: true },
-                    selectionTools: { "lasso-selection": false, "rectangle-selection": false }
+                    createTools: {
+                        point: true,
+                        polyline: false,
+                        polygon: false,
+                        rectangle: false,
+                        circle: false
+                    },
+                    selectionTools: {
+                        "lasso-selection": false,
+                        "rectangle-selection": false,
+                        "circle-selection": false,
+                        "polygon-selection": false
+                    }
                 },
                 pointSymbol: pointSymbol
             });
 
+            // Add the Sketch widget to the top-right corner of the map
             view.ui.add(sketch, { position: "top-right" });
 
+            // Add the Submit button below the Sketch tool in the top-right corner
             const submitButton = document.createElement("button");
             submitButton.id = "submitPoints";
             submitButton.innerText = "Submit Points";
             view.ui.add(submitButton, "top-right");
 
+            // Create a Locate widget to show user's current location
             const locateWidget = new Locate({
                 view: view,
                 useHeadingEnabled: false,
                 goToOverride: function (view, options) {
-                    options.target.scale = 1500;
+                    options.target.scale = 1500; // Zoom in when locating user
                     return view.goTo(options.target);
                 }
             });
+
+            // Add the Locate widget to the top-left corner of the map
             view.ui.add(locateWidget, { position: "top-left" });
 
-            const searchWidget = new Search({ view: view });
+            // Create a Search widget to search for addresses and zoom to them
+            const searchWidget = new Search({
+                view: view
+            });
+
+            // Add the Search widget to the top-left corner below the Locate widget
             view.ui.add(searchWidget, { position: "top-left", index: 1 });
 
+            // Array to store drawn points with coordinates
             const drawnPoints = [];
 
+            // Set the Sketch widget to continuous creation mode
+            sketch.creationMode = "continuous";
+
+            // Store points with coordinates when the user finishes drawing them
             sketch.on("create", function (event) {
                 if (event.state === "complete") {
                     const point = event.graphic.geometry;
@@ -121,10 +158,12 @@
                 }
             });
 
+            // Submit button logic to send points to the feature layer
             submitButton.onclick = function () {
                 const userName = document.getElementById("userName").value;
                 const userEmail = document.getElementById("userEmail").value;
 
+                // Check if user name, email, and points are filled out
                 if (!userName || !userEmail) {
                     alert("Please enter your name and email.");
                     return;
@@ -138,22 +177,25 @@
                     url: "https://services5.arcgis.com/aGI9Mx1pvNKY7ehV/arcgis/rest/services/MapleTrees/FeatureServer"
                 });
 
+                // Prepare features with coordinates in attributes
                 const features = drawnPoints.map(point => new Graphic({
                     geometry: point.geometry,
                     attributes: {
-                        Latitude: point.latitude,
-                        Longitude: point.longitude,
+                        lat2: point.latitude, // Matches the 'lat2' field in your feature layer
+                        long2: point.longitude, // Matches the 'long2' field in your feature layer
                         userName: userName,
                         userEmail: userEmail
                     }
                 }));
 
+                // Submit points to the feature layer
                 featureLayer.applyEdits({ addFeatures: features })
                     .then(response => {
                         console.log("Points submitted successfully!", response);
                         drawnPoints.length = 0;
                         graphicsLayer.removeAll();
 
+                        // Display confirmation message with user name
                         alert(`Thank you, ${userName}, for your planting map submission. We will contact you at ${userEmail} about the status of your application within a week or two.`);
                     })
                     .catch(error => console.error("Error submitting points:", error));
