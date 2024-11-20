@@ -126,7 +126,15 @@
                 layer: graphicsLayer,
                 view: view,
                 creationMode: "update",
-                visibleElements: { createTools: { point: true } },
+                visibleElements: {
+                    createTools: { point: true },
+                    selectionTools: true,
+                    createTools: {
+                        polygon:false,
+                        polyline: false,
+                        rectangle:false,
+                        circle: false
+                    },
                 pointSymbol: pointSymbol
             });
             view.ui.add(sketch, { position: "top-right" });
