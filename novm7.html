@@ -93,7 +93,7 @@
     <!-- Custom modal for displaying the submission message -->
     <div id="customModal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
+            <span class="close" id="closeModal">&times;</span>
             <div class="modal-header">A note from Maple Leaves Forever</div>
             <p id="modalMessage"></p>
         </div>
@@ -240,9 +240,10 @@
             }
 
             // Close the custom modal
-            function closeModal() {
+            const closeModalButton = document.getElementById("closeModal");
+            closeModalButton.addEventListener("click", function() {
                 document.getElementById("customModal").style.display = "none";
-            }
+            });
 
             window.onclick = function(event) {
                 const modal = document.getElementById("customModal");
