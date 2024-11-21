@@ -10,69 +10,13 @@
         #viewDiv {
             height: 80vh;
         }
-        .form-container {
-            padding: 10px;
-            background-color: #f9f9f9;
-        }
-        .form-field {
-            margin-bottom: 10px;
-        }
-        #submitPoints {
-            padding: 8px 16px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 4px;
-            font-size: 16px;
-            margin-top: 10px;
-        }
-        #submitPoints:hover {
-            background-color: #0056b3;
-        }
-        /* Modal styling */
-        #confirmationModal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-        #modalContent {
-            background-color: white;
-            padding: 20px;
-            margin: 15% auto;
-            border-radius: 8px;
-            width: 80%;
-            max-width: 500px;
-            text-align: center;
-        }
-        #modalTitle {
-            font-size: 20px;
-            margin-bottom: 15px;
-        }
-        #modalMessage {
-            margin-bottom: 20px;
-        }
-        #closeModal {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            cursor: pointer;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        #closeModal:hover {
-            background-color: #0056b3;
-        }
+        /* Styling for the form and modal elements */
+        /* Your CSS here */
     </style>
 </head>
 <body>
     <div class="form-container">
+        <!-- Form Fields -->
         <div class="form-field">
             <label for="userName">Full Name:</label>
             <input type="text" id="userName" placeholder="Enter your full name" required>
@@ -85,7 +29,6 @@
 
     <div id="viewDiv"></div> <!-- Map container -->
 
-    <!-- Modal for confirmation message -->
     <div id="confirmationModal">
         <div id="modalContent">
             <div id="modalTitle">A note from Maple Leaves Forever</div>
@@ -105,6 +48,8 @@
             "esri/widgets/Locate",
             "esri/widgets/Search"
         ], function (Map, MapView, GraphicsLayer, Sketch, Graphic, FeatureLayer, Locate, Search) {
+            
+            // Initialize map and view
             const map = new Map({ basemap: "hybrid" });
             const view = new MapView({
                 container: "viewDiv",
@@ -115,27 +60,20 @@
             const graphicsLayer = new GraphicsLayer();
             map.add(graphicsLayer);
 
-            const pointSymbol = {
-                type: "simple-marker",
-                style: "circle",
-                color: "red",
-                size: "12px"
-            };
-
+            // Configure Sketch widget for points only
             const sketch = new Sketch({
                 layer: graphicsLayer,
                 view: view,
                 creationMode: "update",
                 visibleElements: {
-                    createTools: { point: true },
-                    selectionTools: true,
-                    createTools: {
-                        polygon:false,
-                        polyline: false,
-                        rectangle:false,
-                        circle: false
-                    },
-                pointSymbol: pointSymbol
+                    createTools: { point: true, polygon: false, polyline: false, rectangle: false, circle: false }
+                },
+                pointSymbol: {
+                    type: "simple-marker",
+                    style: "circle",
+                    color: "red",
+                    size: "12px"
+                }
             });
             view.ui.add(sketch, { position: "top-right" });
 
@@ -150,8 +88,8 @@
             const searchWidget = new Search({ view: view });
             view.ui.add(searchWidget, { position: "top-left", index: 1 });
 
+            // Capture points drawn by the user
             const drawnPoints = [];
-            sketch.creationMode = "continuous";
             sketch.on("create", function (event) {
                 if (event.state === "complete") {
                     const point = event.graphic.geometry;
@@ -163,6 +101,7 @@
                 }
             });
 
+            // Submit button event listener
             submitButton.onclick = function () {
                 const userName = document.getElementById("userName").value;
                 const userEmail = document.getElementById("userEmail").value;
